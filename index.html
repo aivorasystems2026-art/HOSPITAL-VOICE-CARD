@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A3B4A">
+<meta name="format-detection" content="telephone=no">
+<title>Sri Lakshmi Hospital — Digital Card</title>
+<style>
+
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --ink:#F4FBFA;
+    --ink-soft:#E6F5F3;
+    --paper:#0A3B4A;
+    --brass:#0E9F8E;
+    --brass-dim:#7FD6CB;
+    --sage:#B45309;
+    --line: rgba(10,59,74,0.16);
+    --radius: 2px;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html{
+    min-height:100%;
+    overflow-x:hidden;  /* clip stray horizontal overflow without touching vertical scroll */
+    overflow-y:auto;
+  }
+  body{
+    margin:0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    min-height:100vh;
+    min-height:100dvh; /* accounts for the address bar on mobile Safari/Chrome */
+    padding:32px 16px calc(32px + env(safe-area-inset-bottom)) 16px;
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+    line-height:1.5;
+    overflow-y:visible; /* let the page scroll normally — swiping must never be blocked */
+    -webkit-overflow-scrolling: touch; /* smooth momentum scrolling on iOS */
+    overscroll-behavior-y: contain;
+  }
+
+  @media (min-height: 700px){
+    /* Only vertically center on screens tall enough that the card still starts on-screen. */
+    body{ align-items:center; }
+  }
+
+  .stage{
+    width:100%;
+    max-width:640px;
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+  }
+
+  /* ---------- Card ---------- */
+  .card-wrap{ perspective:1600px; }
+
+  .partner-badge{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    background:#FFFFFF;
+    border-radius:10px;
+    padding:10px 14px;
+    box-shadow: 0 14px 28px -18px rgba(10,59,74,0.35);
+  }
+  .partner-badge img{
+    height:32px;
+    width:auto;
+    display:block;
+  }
+  .partner-badge span{
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--paper);
+    opacity:0.65;
+  }
+
+  .card{
+    position:relative;
+    width:100%;
+    min-height: clamp(210px, 40vw, 260px);
+    border-radius: var(--radius);
+    background:
+      radial-gradient(120% 140% at 85% -10%, rgba(14,159,142,0.16), transparent 55%),
+      linear-gradient(155deg, var(--ink-soft), var(--ink) 65%);
+    border:1px solid var(--line);
+    box-shadow: 0 30px 60px -20px rgba(10,59,74,0.25);
+    padding: clamp(16px, 4vw, 40px);
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    gap: 14px;
+    overflow:hidden;
+    transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .card::before{
+    content:"";
+    position:absolute;
+    inset:10px;
+    border:1px solid var(--line);
+    pointer-events:none;
+  }
+
+  .card-top{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:16px;
+    flex-shrink: 0; /* never let this section get squeezed by content below it */
+  }
+
+  .card-top-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap: wrap;
+    width:100%;
+  }
+
+  .lang-toggle{
+    flex-shrink: 0; /* language switch stays fully visible and tappable at all times */
+  }
+
+  .role-tag{
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform: uppercase;
+    color: var(--brass);
+  }
+
+  .lang-toggle{
+    display:flex;
+    border:1.5px solid var(--brass-dim);
+    border-radius:999px;
+    padding:3px;
+    gap:3px;
+    background: rgba(14,159,142,0.06);
+  }
+  .lang-btn{
+    border:none;
+    background:transparent;
+    color: var(--paper);
+    font-family:'Inter',sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    letter-spacing:0.02em;
+    padding:7px 16px;
+    min-height:32px;
+    border-radius:999px;
+    cursor:pointer;
+    touch-action: manipulation;
+    transition: background .2s ease, color .2s ease;
+  }
+  .lang-btn:hover{ color: var(--brass); }
+  .lang-btn.active{
+    background: var(--brass);
+    color: var(--ink);
+  }
+  .lang-btn:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+
+  .card-mid{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+
+  .company-name{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size: clamp(28px, 5.4vw, 42px);
+    letter-spacing: -0.01em;
+    margin:0;
+    color: var(--paper);
+  }
+
+  .tagline{
+    font-size:13.5px;
+    color: var(--sage);
+    max-width: 340px;
+    font-style: italic;
+    font-family:'Fraunces', serif;
+  }
+
+  .card-bottom{
+    border-top:1px solid var(--line);
+    padding-top:14px;
+  }
+
+  .contact-line{
+    font-size:12px;
+    color: var(--paper);
+    opacity:0.75;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+  }
+
+  .contact-line span b{
+    color:var(--brass);
+    font-weight:500;
+  }
+
+  /* Speaker button sits on the card itself */
+  .speak-btn{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: transparent;
+    border:1px solid var(--brass-dim);
+    color: var(--paper);
+    border-radius: 999px;
+    padding:9px 16px 9px 12px;
+    min-height:40px;
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    letter-spacing:0.01em;
+    cursor:pointer;
+    touch-action: manipulation;
+    transition: border-color 0.25s ease, background 0.25s ease;
+    flex-shrink:0;
+  }
+  .speak-btn:hover{ border-color: var(--brass); background: rgba(14,159,142,0.08); }
+  .speak-btn:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+  .speak-btn.playing{ border-color: var(--brass); background: rgba(14,159,142,0.1); }
+
+  .wave{
+    display:flex;
+    align-items:center;
+    gap:2px;
+    height:14px;
+  }
+  .wave i{
+    width:2px;
+    height:4px;
+    background: var(--brass);
+    border-radius:1px;
+    animation: none;
+  }
+  .speak-btn.playing .wave i{ animation: bounce 0.9s ease-in-out infinite; }
+  .wave i:nth-child(1){ animation-delay: 0s; }
+  .wave i:nth-child(2){ animation-delay: 0.12s; }
+  .wave i:nth-child(3){ animation-delay: 0.24s; }
+  .wave i:nth-child(4){ animation-delay: 0.36s; }
+  @keyframes bounce{
+    0%, 100%{ height:4px; }
+    50%{ height:13px; }
+  }
+
+  /* ---------- Console panel ---------- */
+  .console{
+    border:1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--ink-soft);
+    padding: 22px clamp(16px, 4vw, 28px);
+  }
+
+  .console-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:14px;
+  }
+
+  .console-head h2{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-size:16px;
+    margin:0;
+    color: var(--paper);
+  }
+
+  .status-dot{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:11px;
+    color: var(--sage);
+  }
+  .status-dot::before{
+    content:"";
+    width:6px; height:6px;
+    border-radius:50%;
+    background: var(--sage);
+  }
+  .status-dot.live::before{ background:#9BBE8F; box-shadow:0 0 0 3px rgba(155,190,143,0.2); }
+
+  .transcript{
+    min-height:70px;
+    max-height:220px;
+    overflow-y:auto;
+    font-size:14px;
+    color: rgba(10,59,74,0.88);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding-right:4px;
+  }
+
+  .transcript .empty{
+    color: var(--sage);
+    font-size:13px;
+  }
+
+  .bubble{
+    max-width:88%;
+    padding:9px 13px;
+    border-radius: var(--radius);
+    font-size:13.5px;
+  }
+  .bubble.user{
+    align-self:flex-end;
+    background: rgba(14,159,142,0.12);
+    border:1px solid rgba(14,159,142,0.3);
+  }
+  .bubble.agent{
+    align-self:flex-start;
+    background: rgba(10,59,74,0.05);
+    border:1px solid var(--line);
+  }
+
+  .console-controls{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:16px;
+  }
+
+  .chip{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background: var(--brass);
+    border:1px solid var(--brass);
+    color: var(--ink);
+    opacity:1;
+    font-weight:700;
+    font-size:13px;
+    width:100%;
+    padding:9px 16px;
+    min-height:44px;
+    border-radius:999px;
+    cursor:pointer;
+    touch-action: manipulation;
+    font-family:'Inter',sans-serif;
+    transition: opacity .2s ease;
+  }
+  .chip:hover{ opacity:0.9; }
+  .chip:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+
+  .chip-icon{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:32px;
+    height:32px;
+    flex-shrink:0;
+    border-radius:50%;
+    background: radial-gradient(circle at 32% 28%, #3FD0BE, #075E54 72%);
+    border:1px solid rgba(14,159,142,0.4);
+    box-shadow:
+      0 3px 7px rgba(10,59,74,0.35),
+      inset 0 1px 1px rgba(255,255,255,0.28),
+      inset 0 -3px 4px rgba(0,0,0,0.45);
+    color: var(--ink);
+    overflow:hidden;
+  }
+  .chip-icon::before{
+    /* glossy highlight streak, like light glinting off a glass sphere */
+    content:"";
+    position:absolute;
+    top:4px;
+    left:7px;
+    width:14px;
+    height:7px;
+    border-radius:50%;
+    background: rgba(255,255,255,0.4);
+    filter: blur(2px);
+    pointer-events:none;
+  }
+  .chip-icon svg{
+    position:relative;
+    z-index:1;
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.6));
+  }
+
+  .chip-label{
+    flex:1;
+    text-align:center;
+  }
+
+  .ask-row{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+  }
+
+  .ask-row input{
+    flex:1 1 0%;
+    min-width:0; /* lets the input actually shrink instead of pushing the buttons off-edge on small screens */
+    background: var(--ink);
+    border:1px solid var(--line);
+    color: var(--paper);
+    padding:10px 12px;
+    border-radius: var(--radius);
+    font-family:'Inter',sans-serif;
+    font-size:16px; /* 16px avoids iOS Safari auto-zooming the page on focus */
+  }
+  .ask-row input:focus{ outline:none; border-color: var(--brass-dim); }
+  .ask-row input::placeholder{ color: rgba(10,59,74,0.35); }
+
+  .send-btn{
+    border:1px solid var(--line);
+    background: transparent;
+    color: var(--paper);
+    width:44px;
+    min-height:44px; /* 44px meets iOS/Android minimum comfortable touch-target size */
+    border-radius: var(--radius);
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    touch-action: manipulation;
+    transition: border-color .2s ease, background .2s ease, color .2s ease;
+  }
+  .send-btn:hover{ border-color: var(--brass-dim); }
+
+  /* Mic button — sits centered in-flow, directly under the language toggle */
+  .mic-fab{
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    border: none;
+    background: var(--brass);
+    color: var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    cursor:pointer;
+    touch-action: manipulation;
+    box-shadow: 0 10px 24px -8px rgba(0,0,0,0.55), 0 0 0 6px rgba(14,159,142,0.14);
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+  }
+  .mic-fab:hover{ transform: scale(1.05); }
+  .mic-fab:focus-visible{ outline:2px solid var(--brass); outline-offset:3px; }
+  .mic-fab.listening{
+    background: var(--ink);
+    color: var(--brass);
+    box-shadow: 0 10px 24px -8px rgba(0,0,0,0.55), 0 0 0 3px var(--brass);
+    animation: mic-pulse 1.4s ease-in-out infinite;
+  }
+  .mic-fab:disabled{ opacity:0.35; cursor:not-allowed; box-shadow:none; animation:none; }
+
+  @keyframes mic-pulse{
+    0%, 100% { box-shadow: 0 14px 32px -10px rgba(0,0,0,0.65), 0 0 0 3px var(--brass), 0 0 0 3px rgba(14,159,142,0.45); }
+    50% { box-shadow: 0 14px 32px -10px rgba(0,0,0,0.65), 0 0 0 3px var(--brass), 0 0 0 16px rgba(14,159,142,0); }
+  }
+
+  .note{
+    margin-top:12px;
+    font-size:11px;
+    color: rgba(124,139,122,0.9);
+  }
+
+  /* ---------- Enquiry block ---------- */
+  .enquiry-block{
+    margin-top:16px;
+    padding-top:16px;
+    border-top:1px solid var(--line);
+  }
+
+  .enquiry-toggle{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    background:transparent;
+    border:none;
+    color: var(--sage);
+    font-family:'Inter',sans-serif;
+    font-size:12.5px;
+    padding:8px 0;
+    min-height:36px;
+    cursor:pointer;
+    touch-action: manipulation;
+    transition: color .2s ease;
+  }
+  .enquiry-toggle:hover{ color: var(--paper); }
+  .enquiry-toggle:focus-visible{ outline:2px solid var(--brass); outline-offset:3px; }
+
+  .enquiry-form{
+    margin-top:12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+
+  .enquiry-form input,
+  .enquiry-form textarea{
+    width:100%;
+    background: var(--ink);
+    border:1px solid var(--line);
+    color: var(--paper);
+    padding:10px 12px;
+    border-radius: var(--radius);
+    font-family:'Inter',sans-serif;
+    font-size:16px; /* 16px avoids iOS Safari auto-zooming the page on focus */
+    resize: vertical;
+  }
+  .enquiry-form input:focus,
+  .enquiry-form textarea:focus{ outline:none; border-color: var(--brass-dim); }
+  .enquiry-form input::placeholder,
+  .enquiry-form textarea::placeholder{ color: rgba(10,59,74,0.35); }
+
+  .enquiry-form-actions{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  .submit-enquiry-btn{
+    background: var(--brass);
+    border:1px solid var(--brass);
+    color: var(--ink);
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    font-size:13px;
+    padding:10px 18px;
+    min-height:40px;
+    border-radius: var(--radius);
+    cursor:pointer;
+    touch-action: manipulation;
+    transition: opacity .2s ease;
+  }
+  .submit-enquiry-btn:hover{ opacity:0.9; }
+  .submit-enquiry-btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .submit-enquiry-btn:focus-visible{ outline:2px solid var(--brass); outline-offset:2px; }
+
+  .enquiry-status{
+    font-size:12px;
+    color: var(--sage);
+  }
+  .enquiry-status.success{ color:#2E7D4F; }
+  .enquiry-status.error{ color:#B5432E; }
+
+  @media (max-width: 380px){
+    .lang-btn{
+      padding: 6px 12px;
+      font-size: 12.5px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .wave i, .card{ animation:none !important; transition:none !important; }
+  }
+
+  .chip.alt{ background:transparent; color:var(--paper); }
+  .svc-form select,.svc-form input,.svc-form textarea{ width:100%; background:var(--ink); border:1px solid var(--line); color:var(--paper); padding:10px 12px; border-radius:var(--radius); font-family:'Inter',sans-serif; font-size:16px; }
+  .svc-form select:focus,.svc-form input:focus,.svc-form textarea:focus{ outline:none; border-color:var(--brass-dim); }
+  .svc-form{ margin-top:16px; padding-top:16px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:8px; }
+  .svc-form h3{ font-family:'Fraunces',serif; font-weight:500; font-size:15px; margin:0 0 2px; }
+  .svc-row{ display:flex; gap:8px; } .svc-row>*{ flex:1 1 0%; min-width:0; }
+  .svc-form .close{ margin-left:auto; background:none; border:none; color:var(--sage); cursor:pointer; font-size:12px; min-height:36px; }
+  .ref{ font-weight:600; color:var(--brass); }
+  .hero-img{ display:block; width:100%; height:clamp(120px,30vw,180px); border-radius:2px; border:1px solid var(--line); flex-shrink:0; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="card-wrap"><div class="card" id="card">
+    <svg class="hero-img" viewBox="0 0 600 200" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Sample illustration of Sri Lakshmi Hospital building" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFE8F2"/><stop offset="1" stop-color="#F4FBFA"/></linearGradient>
+    <pattern id="win" width="26" height="30" patternUnits="userSpaceOnUse"><rect x="5" y="6" width="16" height="18" rx="1.5" fill="#CFEFF5" stroke="#0A3B4A" stroke-opacity=".25"/><path d="M13 6v18M5 15h16" stroke="#0A3B4A" stroke-opacity=".2"/></pattern>
+  </defs>
+  <rect width="600" height="200" fill="url(#sky)"/>
+  <circle cx="520" cy="42" r="20" fill="#FFF4C2" opacity=".9"/>
+  <g fill="#FFFFFF" opacity=".85"><ellipse cx="90" cy="40" rx="34" ry="10"/><ellipse cx="112" cy="34" rx="22" ry="9"/><ellipse cx="380" cy="28" rx="30" ry="8"/></g>
+  <!-- side wings -->
+  <rect x="90" y="86" width="130" height="90" fill="#E3F1F0" stroke="#0A3B4A" stroke-opacity=".3"/>
+  <rect x="380" y="86" width="130" height="90" fill="#E3F1F0" stroke="#0A3B4A" stroke-opacity=".3"/>
+  <rect x="98" y="94" width="114" height="60" fill="url(#win)"/>
+  <rect x="388" y="94" width="114" height="60" fill="url(#win)"/>
+  <!-- main tower -->
+  <rect x="220" y="46" width="160" height="130" fill="#FFFFFF" stroke="#0A3B4A" stroke-opacity=".35"/>
+  <rect x="220" y="46" width="160" height="12" fill="#0E9F8E"/>
+  <rect x="232" y="66" width="136" height="70" fill="url(#win)"/>
+  <!-- cross sign -->
+  <circle cx="300" cy="30" r="20" fill="#0E9F8E" stroke="#fff" stroke-width="3"/>
+  <path d="M294 22h12v6h6v12h-6v6h-12v-6h-6V28h6z" transform="translate(0,-4) scale(1) translate(0,4)" fill="none"/>
+  <path d="M296 20h8v7h7v8h-7v7h-8v-7h-7v-8h7z" fill="#fff"/>
+  <!-- entrance -->
+  <rect x="270" y="134" width="60" height="42" fill="#0A3B4A"/>
+  <rect x="275" y="139" width="24" height="37" fill="#9ADDE0"/><rect x="301" y="139" width="24" height="37" fill="#9ADDE0"/>
+  <rect x="258" y="126" width="84" height="8" fill="#0E9F8E"/>
+  <text x="300" y="121" text-anchor="middle" font-family="Inter,sans-serif" font-size="9" font-weight="600" fill="#0A3B4A" letter-spacing="1.5">SRI LAKSHMI HOSPITAL</text>
+  <!-- ground -->
+  <rect y="176" width="600" height="24" fill="#8FB8AE"/>
+  <rect y="186" width="600" height="14" fill="#5E7F79"/>
+  <path d="M0 193h600" stroke="#fff" stroke-width="2" stroke-dasharray="18 14" opacity=".8"/>
+  <!-- trees -->
+  <g><rect x="46" y="150" width="6" height="26" fill="#6B4A2B"/><circle cx="49" cy="142" r="20" fill="#3E9A62"/>
+  <rect x="548" y="150" width="6" height="26" fill="#6B4A2B"/><circle cx="551" cy="142" r="20" fill="#3E9A62"/></g>
+  <!-- ambulance -->
+  <g transform="translate(400,160)">
+    <rect x="0" y="0" width="52" height="24" rx="3" fill="#fff" stroke="#0A3B4A" stroke-opacity=".5"/>
+    <path d="M52 6h10l6 8v10H52z" fill="#fff" stroke="#0A3B4A" stroke-opacity=".5"/>
+    <rect x="55" y="9" width="8" height="6" fill="#9ADDE0"/>
+    <rect x="0" y="14" width="68" height="3" fill="#D9382B"/>
+    <path d="M22 4h8v5h5v8h-5v-2h-8z" fill="#D9382B" transform="translate(-2,-1)"/>
+    <rect x="18" y="-4" width="10" height="4" rx="1" fill="#D9382B"/>
+    <circle cx="14" cy="25" r="5" fill="#222"/><circle cx="54" cy="25" r="5" fill="#222"/><circle cx="14" cy="25" r="2" fill="#ccc"/><circle cx="54" cy="25" r="2" fill="#ccc"/>
+  </g>
+</svg>
+    <div class="card-top">
+      <div class="card-top-row">
+        <div class="lang-toggle" id="langToggle" role="group" aria-label="Choose language">
+          <button type="button" class="lang-btn active" data-lang="en">EN</button>
+          <button type="button" class="lang-btn" data-lang="ta">தமிழ்</button>
+        </div>
+        <button class="speak-btn" id="speakBtn" aria-pressed="false">
+          <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          <span id="speakLabel">Hear about our hospital</span>
+        </button>
+      </div>
+      <button class="mic-fab" id="micBtn" title="Ask by voice" aria-label="Ask by voice">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 15c1.66 0 3-1.34 3-3V6c0-1.66-1.34-3-3-3S9 4.34 9 6v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+      </button>
+    </div>
+    <div class="card-mid">
+      <div class="role-tag" id="roleTag"></div>
+      <p class="company-name" id="companyName"></p>
+      <div class="card-bottom"><div class="contact-line" id="contactLine"></div></div>
+      <p class="tagline" id="tagline"></p>
+    </div>
+  </div></div>
+
+  <div class="console">
+    <div class="console-head"><h2></h2><div class="status-dot" id="statusDot">idle</div></div>
+    <div class="transcript" id="transcript"></div>
+    <div class="ask-row">
+      <input type="text" id="askInput" autocomplete="off">
+      <button class="send-btn" id="sendBtn" title="Ask" aria-label="Send question">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+    <div class="console-controls" id="chips"></div>
+
+    <!-- Service forms (Book Appointment / New Patient Registration) -->
+    <div class="svc-form" id="svcForm" hidden></div>
+
+    <p class="note" id="voiceNote"></p>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== CONFIG: connect to Supabase (run the SQL below once, then paste URL + anon key) =====
+create table if not exists hospital_appointments (
+  id uuid primary key default gen_random_uuid(), created_at timestamptz default now(),
+  ref text, name text, phone text, department text, preferred_date date, preferred_time text, reason text, language text, hospital text);
+create table if not exists hospital_registrations (
+  id uuid primary key default gen_random_uuid(), created_at timestamptz default now(),
+  ref text, name text, age int, gender text, phone text, email text, address text, blood_group text, language text, hospital text);
+alter table hospital_appointments enable row level security;
+alter table hospital_registrations enable row level security;
+create policy "anon insert" on hospital_appointments for insert to anon with check (true);
+create policy "anon insert" on hospital_registrations for insert to anon with check (true);
+================================================================================= */
+/* ============================================================
+   SUPABASE CONNECTION
+   Get these from: Supabase Dashboard → Project Settings → API
+   ============================================================ */
+const SUPABASE_URL = "https://zxrlbenaxmjsfgexpkup.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_LsIi7VlsX2mRc6biHqgnZg_2aXDJOsL";
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===== HOSPITAL DATA — replace placeholders with real details ===== */
+const H = { name:"Sri Lakshmi Hospital", website:"srilakshmihospital.com", email:"info@srilakshmihospital.com", phone:"+91 98765 43210" };
+const DEPTS = [["General Medicine","பொது மருத்துவம்"],["Pediatrics","குழந்தை நலம்"],["Gynecology & Obstetrics","மகப்பேறு & மகளிர் நலம்"],["Orthopedics","எலும்பியல்"],["Cardiology","இதய நலம்"],["Dental","பல் மருத்துவம்"],["Eye (Ophthalmology)","கண் மருத்துவம்"],["Other / Not sure","மற்றவை / தெரியவில்லை"]];
+
+const L = {
+en:{
+  role:"Multi-Speciality Hospital · 24×7 Emergency", tagline:"Caring for you and your family, every day.",
+  speakLabel:"Hear about our hospital", consoleTitle:"Ask Sri Lakshmi Hospital",
+  empty:"Tap a service below, or ask your own question.", placeholder:"Ask about doctors, timings, appointment…",
+  note:"Voice reply uses your browser's built-in speech. Microphone input needs Chrome, Edge, or Safari.",
+  noteNoMic:"Microphone input isn't supported in this browser — please type your question.",
+  status:{idle:"idle",speaking:"speaking",listening:"listening",thinking:"thinking"}, speechLang:"en-US", close:"Close",
+  intro:"Vanakkam, I'm the Sri Lakshmi Hospital voice assistant. We are a multi-speciality hospital with a twenty-four hour emergency ward, pharmacy, laboratory and scan centre. I can help you book a doctor appointment or register as a new patient. Just tap a service below, or ask me a question.",
+  fallback:"I don't have a specific answer for that, but you can call our helpdesk at +91 98765 43210 and we'll be happy to help.",
+  topics:[
+   {id:"book",label:"Book Appointment",keywords:["book","appointment","consult","see a doctor","slot","visit","booking"],
+    answer:"I can help you book an appointment. Please choose the department, your preferred date and time, and share your name and phone number in the form below. Our team will confirm your slot by phone."},
+   {id:"register",label:"New Patient Registration",keywords:["register","registration","new patient","first time","enroll","patient id","uhid","card"],
+    answer:"New patients can pre-register here. Please fill in your name, age, gender, phone number and address in the form below, and you'll receive a patient reference number. Carry a photo ID when you visit the hospital."},
+   {id:"depts",label:"Departments",keywords:["department","speciality","specialty","doctor","cardio","ortho","pediatric","dental","eye","gynec","emergency"],
+    answer:"We offer General Medicine, Pediatrics, Gynecology and Obstetrics, Orthopedics, Cardiology, Dental and Eye care, along with a twenty-four hour emergency and ambulance service."},
+   {id:"timings",label:"Timings",keywords:["time","timing","hours","open","close","visiting"],
+    answer:"Outpatient consultation is from 8 AM to 8 PM, Monday to Saturday, and 9 AM to 1 PM on Sundays. Emergency and pharmacy services are available twenty-four hours, every day."},
+   {id:"loc",label:"Location",keywords:["location","where","address","directions","map","parking"],
+    answer:"Our hospital is centrally located with easy bus access and free patient parking. Please call the helpdesk for exact directions and we will guide you."},
+   {id:"contact",label:"Contact",keywords:["contact","email","phone","call","helpdesk","ambulance","reach"],
+    answer:"You can reach our helpdesk at +91 98765 43210 or email info@srilakshmihospital.com. For emergencies or ambulance, please call immediately."}
+  ],
+  forms:{
+   book:{title:"Book an Appointment",submit:"Confirm booking",fields:{name:"Patient name",phone:"Phone number",dept:"Department",date:"Preferred date",time:"Preferred time",reason:"Reason for visit (optional)"},times:["Morning (8 AM – 12 PM)","Afternoon (12 – 4 PM)","Evening (4 – 8 PM)"]},
+   register:{title:"New Patient Registration",submit:"Register patient",fields:{name:"Full name",age:"Age",gender:"Gender",phone:"Phone number",email:"Email (optional)",address:"Address",blood:"Blood group (optional)"},genders:["Female","Male","Other"]},
+   sending:"Sending…", required:"Please fill in the required fields (name and a valid 10-digit phone).", notConfigured:"Submissions aren't connected yet. Please call our helpdesk.", error:"Something went wrong. Please try again or call us.",
+   okBook:r=>`Appointment request received. Reference ${r}. We'll confirm your slot by phone shortly.`,
+   okReg:r=>`Registration received. Your reference number is ${r}. Please carry a photo ID on your first visit.`,
+   voiceBook:"Thank you. Your appointment request has been received, and our team will confirm your slot shortly.",
+   voiceReg:"Thank you. Your registration has been received. Please carry a photo ID on your first visit."}
+},
+ta:{
+  role:"பல்நோக்கு மருத்துவமனை · 24×7 அவசர சிகிச்சை", tagline:"உங்களையும் உங்கள் குடும்பத்தையும் அன்புடன் பராமரிக்கிறோம்.",
+  speakLabel:"எங்கள் மருத்துவமனையைப் பற்றி கேளுங்கள்", consoleTitle:"ஸ்ரீ லட்சுமி மருத்துவமனையிடம் கேளுங்கள்",
+  empty:"கீழே உள்ள சேவையைத் தட்டவும், அல்லது உங்கள் கேள்வியைக் கேளுங்கள்.", placeholder:"மருத்துவர், நேரம், முன்பதிவு பற்றி கேளுங்கள்…",
+  note:"குரல் பதில் உங்கள் உலாவியின் உள்ளமைந்த பேச்சு அம்சத்தைப் பயன்படுத்துகிறது. மைக்ரோஃபோனுக்கு Chrome, Edge அல்லது Safari தேவை.",
+  noteNoMic:"இந்த உலாவியில் மைக்ரோஃபோன் ஆதரிக்கப்படவில்லை — தட்டச்சு செய்யவும்.",
+  status:{idle:"தயார்",speaking:"பேசுகிறது",listening:"கேட்கிறது",thinking:"யோசிக்கிறது"}, speechLang:"ta-IN", close:"மூடு",
+  intro:"வணக்கம், நான் ஸ்ரீ லட்சுமி மருத்துவமனையின் குரல் உதவியாளர். நாங்கள் இருபத்து நான்கு மணி நேர அவசர சிகிச்சைப் பிரிவு, மருந்தகம், ஆய்வகம் மற்றும் ஸ்கேன் மையத்துடன் கூடிய பல்நோக்கு மருத்துவமனை. மருத்துவரைச் சந்திக்க முன்பதிவு செய்யவும், புதிய நோயாளியாகப் பதிவு செய்யவும் நான் உதவுவேன். கீழே உள்ள சேவையைத் தட்டவும், அல்லது என்னிடம் கேளுங்கள்.",
+  fallback:"அதற்கு குறிப்பிட்ட பதில் என்னிடம் இல்லை, ஆனால் +91 98765 43210 என்ற உதவி எண்ணில் அழைத்தால் நாங்கள் மகிழ்ச்சியுடன் உதவுவோம்.",
+  topics:[
+   {id:"book",label:"முன்பதிவு செய்ய",keywords:["முன்பதிவு","அப்பாயின்ட்மென்ட்","அப்பாயிண்ட்மெண்ட்","டாக்டரைப் பார்க்க","சந்திப்பு","புக்"],
+    answer:"நான் உங்களுக்கு முன்பதிவு செய்ய உதவுகிறேன். கீழே உள்ள படிவத்தில் துறை, விருப்பமான தேதி மற்றும் நேரம், உங்கள் பெயர் மற்றும் தொலைபேசி எண்ணை நிரப்பவும். எங்கள் குழு தொலைபேசியில் உறுதிப்படுத்தும்."},
+   {id:"register",label:"புதிய நோயாளி பதிவு",keywords:["பதிவு","புதிய நோயாளி","முதல் முறை","ரெஜிஸ்டர்","பேஷண்ட்"],
+    answer:"புதிய நோயாளிகள் இங்கேயே முன்பதிவு செய்யலாம். கீழே உள்ள படிவத்தில் பெயர், வயது, பாலினம், தொலைபேசி எண் மற்றும் முகவரியை நிரப்பவும், உங்களுக்கு ஒரு நோயாளி குறிப்பு எண் கிடைக்கும். மருத்துவமனைக்கு வரும்போது புகைப்பட அடையாள அட்டையை எடுத்து வாருங்கள்."},
+   {id:"depts",label:"துறைகள்",keywords:["துறை","மருத்துவர்","டாக்டர்","இதய","எலும்பு","குழந்தை","பல்","கண்","அவசர"],
+    answer:"பொது மருத்துவம், குழந்தை நலம், மகப்பேறு மற்றும் மகளிர் நலம், எலும்பியல், இதய நலம், பல் மற்றும் கண் மருத்துவம் ஆகியவற்றுடன் இருபத்து நான்கு மணி நேர அவசர சிகிச்சை மற்றும் ஆம்புலன்ஸ் சேவையும் உள்ளது."},
+   {id:"timings",label:"நேரம்",keywords:["நேரம்","மணி","திறந்","எப்போது","பார்வையாளர்"],
+    answer:"வெளிநோயாளி ஆலோசனை திங்கள் முதல் சனி வரை காலை 8 முதல் இரவு 8 மணி வரை, ஞாயிறு காலை 9 முதல் மதியம் 1 மணி வரை. அவசர சிகிச்சை மற்றும் மருந்தகம் தினமும் 24 மணி நேரமும் செயல்படும்."},
+   {id:"loc",label:"இடம்",keywords:["இடம்","எங்கே","முகவரி","வழி","பார்க்கிங்"],
+    answer:"எங்கள் மருத்துவமனை நகரின் மையப்பகுதியில், பேருந்து வசதியுடனும் இலவச வாகன நிறுத்தத்துடனும் அமைந்துள்ளது. சரியான வழிக்கு உதவி எண்ணை அழையுங்கள்."},
+   {id:"contact",label:"தொடர்பு",keywords:["தொடர்பு","மின்னஞ்சல்","போன்","அழைப்பு","ஆம்புலன்ஸ்","உதவி"],
+    answer:"உதவி எண் +91 98765 43210, மின்னஞ்சல் info@srilakshmihospital.com. அவசரம் அல்லது ஆம்புலன்ஸ் தேவைப்பட்டால் உடனே அழையுங்கள்."}
+  ],
+  forms:{
+   book:{title:"முன்பதிவு செய்யுங்கள்",submit:"முன்பதிவை உறுதி செய்",fields:{name:"நோயாளி பெயர்",phone:"தொலைபேசி எண்",dept:"துறை",date:"விருப்பமான தேதி",time:"விருப்பமான நேரம்",reason:"வருகைக்கான காரணம் (விருப்பம்)"},times:["காலை (8 – 12)","மதியம் (12 – 4)","மாலை (4 – 8)"]},
+   register:{title:"புதிய நோயாளி பதிவு",submit:"பதிவு செய்",fields:{name:"முழுப் பெயர்",age:"வயது",gender:"பாலினம்",phone:"தொலைபேசி எண்",email:"மின்னஞ்சல் (விருப்பம்)",address:"முகவரி",blood:"இரத்த வகை (விருப்பம்)"},genders:["பெண்","ஆண்","மற்றவை"]},
+   sending:"அனுப்புகிறது…", required:"பெயர் மற்றும் 10 இலக்க தொலைபேசி எண்ணை நிரப்பவும்.", notConfigured:"சமர்ப்பிப்பு இன்னும் இணைக்கப்படவில்லை. உதவி எண்ணை அழையுங்கள்.", error:"சிக்கல் ஏற்பட்டது. மீண்டும் முயற்சிக்கவும் அல்லது அழையுங்கள்.",
+   okBook:r=>`முன்பதிவு கோரிக்கை பெறப்பட்டது. குறிப்பு எண் ${r}. விரைவில் தொலைபேசியில் உறுதிப்படுத்துவோம்.`,
+   okReg:r=>`பதிவு பெறப்பட்டது. உங்கள் குறிப்பு எண் ${r}. முதல் வருகையில் புகைப்பட அடையாள அட்டை கொண்டு வாருங்கள்.`,
+   voiceBook:"நன்றி. உங்கள் முன்பதிவு கோரிக்கை பெறப்பட்டது, எங்கள் குழு விரைவில் உறுதிப்படுத்தும்.",
+   voiceReg:"நன்றி. உங்கள் பதிவு பெறப்பட்டது. முதல் வருகையில் புகைப்பட அடையாள அட்டை கொண்டு வாருங்கள்."}
+}};
+
+let lang='en';
+const $=id=>document.getElementById(id);
+const transcript=$('transcript'),chipsWrap=$('chips'),askInput=$('askInput'),statusDot=$('statusDot'),speakBtn=$('speakBtn'),svcForm=$('svcForm'),micBtn=$('micBtn');
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null, listening=false, hasSpokenOnce=false;
+const synth=window.speechSynthesis;
+
+const ICONS={
+ book:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v4M10 16h4"/></svg>',
+ register:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>',
+ depts:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+ timings:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>',
+ loc:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>',
+ contact:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>'
+};
+
+function render(){
+  const t=L[lang];
+  document.documentElement.lang=t.speechLang;
+  $('companyName').textContent=H.name; $('roleTag').textContent=t.role; $('tagline').textContent=t.tagline;
+  $('contactLine').innerHTML=`<span><b>${H.website}</b></span><span>${H.email} · ${H.phone}</span>`;
+  document.title=H.name+" — Digital Card";
+  $('speakLabel').textContent=t.speakLabel;
+  document.querySelector('.console-head h2').textContent=t.consoleTitle;
+  askInput.placeholder=t.placeholder;
+  $('voiceNote').textContent=SR?t.note:t.noteNoMic;
+  statusDot.textContent=t.status.idle;
+  transcript.innerHTML=`<p class="empty">${t.empty}</p>`;
+  chipsWrap.innerHTML='';
+  t.topics.forEach(tp=>{
+    const c=document.createElement('button'); c.type='button'; c.className='chip';
+    c.innerHTML=`<span class="chip-icon">${ICONS[tp.id]}</span><span class="chip-label">${tp.label}</span>`;
+    c.addEventListener('click',()=>{ askQuestion(tp.label); if(tp.id==='book'||tp.id==='register') openForm(tp.id); else closeForm(); });
+    chipsWrap.appendChild(c);
+  });
+  closeForm();
+  if(recognition) recognition.lang=t.speechLang;
+}
+
+$('langToggle').addEventListener('click',e=>{
+  const b=e.target.closest('.lang-btn'); if(!b||b.classList.contains('active')) return;
+  lang=b.dataset.lang;
+  document.querySelectorAll('.lang-btn').forEach(x=>x.classList.toggle('active',x===b));
+  render(); playIntro();
+});
+
+/* ---- Speech ---- */
+if(synth){ synth.getVoices(); try{const p=new SpeechSynthesisUtterance(' ');p.volume=0;p.rate=16;synth.speak(p);}catch(_){} }
+const FEMALE=/female|woman|girl|samantha|zira|jenny|aria|susan|victoria|karen|moira|tessa|fiona|veena|raveena|lekha|vani|shreya|swara|heera|kalpana|priya|neerja|salli|joanna|kendra|kimberly|ivy|amy|emma|nicole|olivia/i;
+function pickVoice(l){
+  const vs=synth.getVoices(); if(!vs.length) return null; const p=l.split('-')[0];
+  const ex=vs.filter(v=>v.lang&&v.lang.toLowerCase()===l.toLowerCase()), sm=vs.filter(v=>v.lang&&v.lang.toLowerCase().startsWith(p));
+  return ex.find(v=>FEMALE.test(v.name))||sm.find(v=>FEMALE.test(v.name))||ex[0]||sm[0]||null;
+}
+function speak(text){
+  const t=L[lang];
+  if(!synth) return;
+  const u=new SpeechSynthesisUtterance(text); u.lang=t.speechLang;
+  const v=pickVoice(t.speechLang); if(v) u.voice=v;
+  u.rate=1; u.pitch=(v&&FEMALE.test(v.name))?1:1.15;
+  u.onstart=()=>{hasSpokenOnce=true;speakBtn.classList.add('playing');speakBtn.setAttribute('aria-pressed','true');statusDot.textContent=L[lang].status.speaking;statusDot.classList.add('live');};
+  u.onend=u.onerror=()=>{speakBtn.classList.remove('playing');speakBtn.setAttribute('aria-pressed','false');statusDot.textContent=L[lang].status.idle;statusDot.classList.remove('live');};
+  if(synth.speaking||synth.pending){synth.cancel();setTimeout(()=>{synth.resume();synth.speak(u);},60);}
+  else{synth.resume();synth.speak(u);}
+}
+speakBtn.addEventListener('click',()=>{ if(synth&&synth.speaking){synth.cancel();return;} playIntro(); });
+
+/* ---- Transcript & Q&A ---- */
+function addBubble(who,text){
+  const e=transcript.querySelector('.empty'); if(e) e.remove();
+  const d=document.createElement('div'); d.className='bubble '+who; d.textContent=text;
+  transcript.appendChild(d); transcript.scrollTop=transcript.scrollHeight;
+}
+function findTopic(q){ q=q.toLowerCase(); return L[lang].topics.find(tp=>tp.label.toLowerCase()===q||tp.keywords.some(k=>q.includes(k.toLowerCase()))); }
+function askQuestion(q){
+  if(!q||!q.trim()) return;
+  if(synth&&(synth.speaking||synth.pending)) synth.cancel();
+  addBubble('user',q);
+  const tp=findTopic(q);
+  statusDot.textContent=L[lang].status.thinking;
+  setTimeout(()=>{ const a=tp?tp.answer:L[lang].fallback; addBubble('agent',a); speak(a); },120);
+  if(tp&&(tp.id==='book'||tp.id==='register')) openForm(tp.id);   // typed/spoken requests open the form too
+}
+function submitInput(){ const v=askInput.value; askInput.value=''; askQuestion(v); }
+$('sendBtn').addEventListener('click',submitInput);
+askInput.addEventListener('keydown',e=>{ if(e.key==='Enter') submitInput(); });
+
+/* ---- Mic ---- */
+if(SR){
+  recognition=new SR(); recognition.lang=L[lang].speechLang; recognition.interimResults=false;
+  recognition.onstart=()=>{listening=true;micBtn.classList.add('listening');statusDot.textContent=L[lang].status.listening;statusDot.classList.add('live');};
+  recognition.onend=recognition.onerror=()=>{listening=false;micBtn.classList.remove('listening');statusDot.classList.remove('live');statusDot.textContent=L[lang].status.idle;};
+  recognition.onresult=e=>askQuestion(e.results[0][0].transcript);
+  micBtn.addEventListener('click',()=>{ if(listening){recognition.stop();return;} synth&&synth.cancel(); recognition.lang=L[lang].speechLang; recognition.start(); });
+} else micBtn.disabled=true;
+
+/* ---- Service forms ---- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function closeForm(){ svcForm.hidden=true; svcForm.innerHTML=''; svcForm.dataset.kind=''; }
+function openForm(kind){
+  const f=L[lang].forms, d=f[kind], fl=d.fields, idx=lang==='en'?0:1;
+  const today=new Date().toISOString().slice(0,10);
+  let body='';
+  if(kind==='book'){
+    body=`<input id="f_name" placeholder="${esc(fl.name)} *" autocomplete="name">
+      <input id="f_phone" type="tel" inputmode="numeric" placeholder="${esc(fl.phone)} *" autocomplete="tel">
+      <select id="f_dept">${DEPTS.map(x=>`<option value="${esc(x[0])}">${esc(x[idx])}</option>`).join('')}</select>
+      <div class="svc-row"><input id="f_date" type="date" min="${today}" value="${today}" aria-label="${esc(fl.date)}">
+      <select id="f_time" aria-label="${esc(fl.time)}">${d.times.map((x,i)=>`<option value="${esc(L.en.forms.book.times[i])}">${esc(x)}</option>`).join('')}</select></div>
+      <textarea id="f_reason" rows="2" placeholder="${esc(fl.reason)}"></textarea>`;
+  } else {
+    body=`<input id="f_name" placeholder="${esc(fl.name)} *" autocomplete="name">
+      <div class="svc-row"><input id="f_age" type="number" min="0" max="120" inputmode="numeric" placeholder="${esc(fl.age)}">
+      <select id="f_gender" aria-label="${esc(fl.gender)}">${d.genders.map((x,i)=>`<option value="${esc(L.en.forms.register.genders[i])}">${esc(x)}</option>`).join('')}</select></div>
+      <input id="f_phone" type="tel" inputmode="numeric" placeholder="${esc(fl.phone)} *" autocomplete="tel">
+      <input id="f_email" type="email" placeholder="${esc(fl.email)}" autocomplete="email">
+      <textarea id="f_address" rows="2" placeholder="${esc(fl.address)}"></textarea>
+      <input id="f_blood" placeholder="${esc(fl.blood)}">`;
+  }
+  svcForm.innerHTML=`<div style="display:flex;align-items:center"><h3>${esc(d.title)}</h3><button type="button" class="close" id="f_close">${esc(L[lang].close)}</button></div>${body}
+    <div class="enquiry-form-actions"><button type="button" class="submit-enquiry-btn" id="f_submit">${esc(d.submit)}</button><span class="enquiry-status" id="f_status" role="status" aria-live="polite"></span></div>`;
+  svcForm.dataset.kind=kind; svcForm.hidden=false;
+  $('f_close').onclick=closeForm; $('f_submit').onclick=()=>submitForm(kind);
+  setTimeout(()=>svcForm.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+const val=id=>{const e=$(id);return e?e.value.trim():'';};
+async function submitForm(kind){
+  const f=L[lang].forms, st=$('f_status'), btn=$('f_submit');
+  const name=val('f_name'), phone=val('f_phone').replace(/[\s+-]/g,'').replace(/^91(?=\d{10}$)/,'');
+  const set=(m,c)=>{st.textContent=m;st.className='enquiry-status '+(c||'');};
+  if(!name||!/^\d{10}$/.test(phone)){ set(f.required,'error'); return; }
+  const ref=(kind==='book'?'APT-':'REG-')+Date.now().toString(36).toUpperCase().slice(-6);
+  const base={ref,name,phone,language:lang,hospital:H.name};
+  const row=kind==='book'
+    ? {...base,department:val('f_dept'),preferred_date:val('f_date')||null,preferred_time:val('f_time'),reason:val('f_reason')}
+    : {...base,age:val('f_age')?parseInt(val('f_age'),10):null,gender:val('f_gender'),email:val('f_email'),address:val('f_address'),blood_group:val('f_blood')};
+  const table=kind==='book'?'hospital_appointments':'hospital_registrations';
+  btn.disabled=true; set(f.sending);
+  try{
+    const { error } = await db.from(table).insert(row);
+    if(error){ console.error('Supabase insert failed',error); set(f.error,'error'); return; }
+    const msg=kind==='book'?f.okBook(ref):f.okReg(ref);
+    set(msg,'success'); addBubble('agent',msg); speak(kind==='book'?f.voiceBook:f.voiceReg);
+    svcForm.querySelectorAll('input,textarea').forEach(e=>{ if(e.type!=='date') e.value=''; });
+  }catch(err){ console.error(err); set(f.error,'error'); }
+  finally{ btn.disabled=false; }
+}
+
+/* ---- Start ---- */
+render();
+function playIntro(){ const t=L[lang]; addBubble('agent',t.intro); speak(t.intro); }
+playIntro();
+['click','touchstart','keydown'].forEach(evt=>document.addEventListener(evt,()=>{ if(!hasSpokenOnce) speak(L[lang].intro); },{once:true}));
+</script>
+</body>
+</html>
